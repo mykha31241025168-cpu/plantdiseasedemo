@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Disease Prediction</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>🌱 Dự đoán bệnh trên lá cây</h1>
+    
+    {% if not has_result %}
+        <!-- Upload Form -->
+        <form action="/" method="POST" enctype="multipart/form-data" class="upload-form">
+            <div class="drop-zone" id="drop-zone">
+                <p>Bấm để tải ảnh lên hoặc kéo thả hình ảnh</p>
+                <input type="file" name="file" id="file" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn-predict">🔮 Dự đoán</button>
+        </form>
+    {% else %}
+        <!-- Results Section -->
+        <div class="result-container">
+            <h2>📊 Kết quả dự đoán:</h2>
+            
+            <div class="result-box">
+                <div class="result-main">
+                    <h3>🌿 Bệnh chính:</h3>
+                    <p class="disease-name">{{ result.main_prediction.class }}</p>
+                    <p class="confidence">Độ tin cậy: <span class="confidence-value">{{ "%.2f" | format(result.main_prediction.confidence * 100) }}%</span></p>
+                    <p class="severity">Mức độ nặng: <span class="severity-value">{{ "%.1f" | format(result.severity_score) }}/10</span></p>
+                    <p class="severity-text">{{ result.severity_text }}</p>
+                </div>
+                
+                <div class="result-details">
+                    <h3>🎯 Top 3 dự đoán:</h3>
+                    <ol class="predictions-list">
+                        {% for pred in result.predictions %}
+                            <li>
+                                <span class="pred-class">{{ pred.class }}</span>
+                                <span class="pred-confidence">{{ "%.2f" | format(pred.confidence * 100) }}%</span>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <!-- Upload Another Image Form -->
+            <h3>📸 Tải ảnh khác để kiểm tra:</h3>
+            <form action="/" method="POST" enctype="multipart/form-data" class="upload-form-again">
+                <div class="drop-zone-small" id="drop-zone-again">
+                    <p>Bấm hoặc kéo thả ảnh mới</p>
+                    <input type="file" name="file" id="file-again" accept="image/*" required>
+                </div>
+                <button type="submit" class="btn-predict">🔮 Dự đoán lại</button>
+            </form>
+        </div>
+    {% endif %}
+    
+    <script src="/static/script.js"></script>
+</body>
+</html>
