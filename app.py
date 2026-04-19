@@ -15,35 +15,41 @@ REGRESSION_MODEL_PATH = BASE_DIR / "models" / "demo_regression_model.h5"
 LABEL_ENCODER_PATH = BASE_DIR / "models" / "demo_label_encoder.pkl"
 SCALER_PATH = BASE_DIR / "models" / "demo_scaler.pkl"
 
-if not MODEL_PATH.exists():
-    raise FileNotFoundError(f"Model file not found at {MODEL_PATH}. Please ensure the file exists.")
+# Global variables for models (loaded lazily)
+model = None
+reg_model = None
+label_encoder = None
+scaler = None
 
-if not REGRESSION_MODEL_PATH.exists():
-    raise FileNotFoundError(f"Regression model file not found at {REGRESSION_MODEL_PATH}. Please ensure the file exists.")
-
-if not LABEL_ENCODER_PATH.exists():
-    raise FileNotFoundError(f"Label encoder file not found at {LABEL_ENCODER_PATH}. Please ensure the file exists.")
-
-if not SCALER_PATH.exists():
-    raise FileNotFoundError(f"Scaler file not found at {SCALER_PATH}. Please ensure the file exists.")
-
-# Load models
-model = load_model(MODEL_PATH)
-reg_model = load_model(REGRESSION_MODEL_PATH)
-
-# Load label encoder (same as predict_disease_demo.py)
-with open(LABEL_ENCODER_PATH, 'rb') as f:
-    label_encoder = pickle.load(f)
-
-# Load scaler (same as predict_disease_demo.py)
-with open(SCALER_PATH, 'rb') as f:
-    scaler = pickle.load(f)
-
-print(f"✅ Classification model loaded from: {MODEL_PATH}")
-print(f"✅ Regression model loaded from: {REGRESSION_MODEL_PATH}")
-print(f"✅ Label encoder loaded from: {LABEL_ENCODER_PATH}")
-print(f"✅ Scaler loaded from: {SCALER_PATH}")
-print(f"📊 Number of classes: {len(label_encoder)}") 
+def load_models():
+    global model, reg_model, label_encoder, scaler
+    if model is None:
+        if not MODEL_PATH.exists():
+            raise FileNotFoundError(f"Model file not found at {MODEL_PATH}. Please ensure the file exists.")
+        model = load_model(MODEL_PATH)
+        print(f"✅ Classification model loaded from: {MODEL_PATH}")
+    
+    if reg_model is None:
+        if not REGRESSION_MODEL_PATH.exists():
+            raise FileNotFoundError(f"Regression model file not found at {REGRESSION_MODEL_PATH}. Please ensure the file exists.")
+        reg_model = load_model(REGRESSION_MODEL_PATH)
+        print(f"✅ Regression model loaded from: {REGRESSION_MODEL_PATH}")
+    
+    if label_encoder is None:
+        if not LABEL_ENCODER_PATH.exists():
+            raise FileNotFoundError(f"Label encoder file not found at {LABEL_ENCODER_PATH}. Please ensure the file exists.")
+        with open(LABEL_ENCODER_PATH, 'rb') as f:
+            label_encoder = pickle.load(f)
+        print(f"✅ Label encoder loaded from: {LABEL_ENCODER_PATH}")
+    
+    if scaler is None:
+        if not SCALER_PATH.exists():
+            raise FileNotFoundError(f"Scaler file not found at {SCALER_PATH}. Please ensure the file exists.")
+        with open(SCALER_PATH, 'rb') as f:
+            scaler = pickle.load(f)
+        print(f"✅ Scaler loaded from: {SCALER_PATH}")
+    
+    print(f"📊 Number of classes: {len(label_encoder)}")
 
 # Updated preprocessing function to match predict_disease_demo.py (MobileNetV2 with 224x224 and [0,1] normalization)
 def preprocess_image(image):
@@ -80,6 +86,9 @@ def index():
             return "No file selected", 400
 
         try:
+            # Load models only when needed
+            load_models()
+            
             image = Image.open(file.stream).convert("RGB")
             processed_image = preprocess_image(image)
             
